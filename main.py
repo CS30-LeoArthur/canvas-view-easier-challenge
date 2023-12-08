@@ -7,6 +7,7 @@ WHITE = (255, 255, 255)
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 800
 GROUND_HEIGHT = SCREEN_HEIGHT - 200
+GROUND_WIDTH = SCREEN_WIDTH * 3
 platform_list = []
     
 def rectCollide(rect1, rect2):
@@ -34,10 +35,10 @@ class Player():
             self.jump_count = 0
 
     def go_left(self):
-        self.change_x = -3
+        self.change_x = -6
     
     def go_right(self):
-        self.change_x = 3
+        self.change_x = 6
 
     def hzstop(self):
         self.change_x = 0
@@ -64,18 +65,37 @@ class Player():
         pygame.draw.rect(screen, RED, [self.x, self.y, self.width, self.height])
 
 class Platform():
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, scroll_speed):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
+        self.scroll_speed = scroll_speed
+
+    def platform_update(self):
+        self.x = self.x + self.scroll_speed
 
     def draw_platform(self, screen):
         pygame.draw.rect(screen, GREY, [self.x, self.y, self.width, self.height])
 
-platform_list.append(Platform(0, GROUND_HEIGHT, SCREEN_WIDTH, 200))
-platform_list.append(Platform(300, GROUND_HEIGHT - 100, 150, 20))
-platform_list.append(Platform(500, GROUND_HEIGHT - 200, 150, 20))
+def make_platforms():
+    platform_x = 200
+    platform_width = 150
+    platform_list.append(Platform(-600, GROUND_HEIGHT, GROUND_WIDTH, 200, 0))
+    for i in range(5):
+        platform_list.append(Platform(platform_x, GROUND_HEIGHT - 100, platform_width, 20, 0))
+        platform_list.append(Platform(platform_x + 225, GROUND_HEIGHT - 200, platform_width, 20, 0))
+        platform_x = platform_width + platform_x + 300
+
+class View():
+    def __init__(self, x, y, change_x):
+        self.x = x
+        self.y = y
+        self.change_x = change_x
+
+    def update(self):
+        self.x = self.x + self.change_x
+
 
 def main():
     # Initialize pygame
@@ -89,11 +109,11 @@ def main():
     # Variables
     frame_count = 0
     
-    ground_height = SCREEN_HEIGHT - 200
-    
     player_height = 20
     
-    player = Player(100, ground_height - player_height, 20, player_height, 0, 0, 1)
+    player = Player(SCREEN_WIDTH / 2, GROUND_HEIGHT - player_height, 20, player_height, 0, 0, 1)
+
+    make_platforms()
     # create loop
     done = False
     while not done:
@@ -116,7 +136,11 @@ def main():
 
         player.update()
 
-
+        
+        
+        for i in range(len(platform_list)):
+            platform_list[i].platform_update()
+        
         # Drawing
         screen.fill(WHITE)
         for i in range(len(platform_list)):
