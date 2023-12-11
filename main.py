@@ -20,13 +20,14 @@ def check_collision(object1, object2):
     return -1
 
 class Player():
-    def __init__(self, x, y, width, height, change_x, change_y, jump_count):
+    def __init__(self, x, y, width, height, change_x, change_y, view, jump_count):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.change_x = change_x
         self.change_y = change_y
+        self.view = view
         self.jump_count = jump_count
     
     def jump(self):
@@ -58,13 +59,21 @@ class Player():
     
     def edge_collision(self):
         if self.x < 0:
-            self.hzstop()
+            self.x = 0
         elif self.x + self.width > WORLD_WIDTH:
-            self.hzstop()
+            self.x = WORLD_WIDTH - self.width
+
+    def view_edge_collision(self):
+        if self.view < 0:
+            self.view = 0
+        elif self.view > WORLD_WIDTH - SCREEN_WIDTH:
+            self.view = WORLD_WIDTH - SCREEN_WIDTH
+        return self.view
         
 
     def update(self):
         self.change_y = min(5, self.change_y + 0.2)
+        
         self.x += self.change_x
         self.y += self.change_y
         
@@ -72,9 +81,14 @@ class Player():
 
         self.edge_collision()
 
+        self.view = self.x - 400
+
+        self.view_edge_collision()
+
+        print(self.view)
     
     def draw_player(self, screen):
-        pygame.draw.rect(screen, RED, [self.x, self.y, self.width, self.height])
+        pygame.draw.rect(screen, RED, [self.x - self.view, self.y, self.width, self.height])
 
 class Platform():
     def __init__(self, x, y, width, height):
@@ -83,13 +97,8 @@ class Platform():
         self.width = width
         self.height = height
 
-    def update_platforms(self, player):
-        self.x = self.x + player.change_x 
-
-
-
-    def draw_platform(self, screen):
-        pygame.draw.rect(screen, GREY, [self.x, self.y, self.width, self.height])
+    def draw_platform(self, screen, player):
+        pygame.draw.rect(screen, GREY, [self.x - player.view, self.y, self.width, self.height])
 
 def make_platforms():
     platform_list.append(Platform(0, WORLD_HEIGHT, WORLD_WIDTH, 200))
@@ -113,7 +122,7 @@ def main():
     # Variables
     frame_count = 0
     
-    player = Player(100, WORLD_HEIGHT + 20, 20, 20, 0, 0, 1)
+    player = Player(SCREEN_WIDTH / 2, WORLD_HEIGHT + 20, 20, 20, 0, 0, 0, 1)
 
     make_platforms()
     # create loop
@@ -137,14 +146,11 @@ def main():
         # Logic
 
         player.update()
-
-        for i in range(len(platform_list)):
-            platform_list[i].update_platforms(player)
         
         # Drawing
         screen.fill(WHITE)
         for i in range(len(platform_list)):
-            platform_list[i].draw_platform(screen)
+            platform_list[i].draw_platform(screen, player)
         player.draw_player(screen)
 
         pygame.display.flip()
