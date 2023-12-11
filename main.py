@@ -5,9 +5,9 @@ GREY = (128, 128, 128)
 RED = (255, 0, 0)
 WHITE = (255, 255, 255)
 SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 800
-GROUND_HEIGHT = SCREEN_HEIGHT - 200
-GROUND_WIDTH = SCREEN_WIDTH * 3
+SCREEN_HEIGHT = 600
+WORLD_HEIGHT = SCREEN_HEIGHT - 50
+WORLD_WIDTH = 1800
 platform_list = []
     
 def rectCollide(rect1, rect2):
@@ -35,10 +35,10 @@ class Player():
             self.jump_count = 0
 
     def go_left(self):
-        self.change_x = -6
+        self.change_x = -3
     
     def go_right(self):
-        self.change_x = 6
+        self.change_x = 3
 
     def hzstop(self):
         self.change_x = 0
@@ -46,11 +46,7 @@ class Player():
     def vt_default(self):
         self.change_y = 0.1
 
-    def update(self):
-        self.change_y = min(5, self.change_y + 0.2)
-        self.x = self.x + self.change_x
-        self.y = self.y + self.change_y
-        
+    def check_platform_collsion(self):
         platform_index = check_collision(platform_list, self)
         if platform_index != -1:
             self.vt_default()
@@ -59,42 +55,50 @@ class Player():
                 self.y = platform_list[platform_index].y - self.height
             elif self.change_y < 0:
                 self.y = platform_list[platform_index].y - self.height
+    
+    def edge_collision(self):
+        if self.x < 0:
+            self.hzstop()
+        elif self.x + self.width > WORLD_WIDTH:
+            self.hzstop()
+        
+
+    def update(self):
+        self.change_y = min(5, self.change_y + 0.2)
+        self.x += self.change_x
+        self.y += self.change_y
+        
+        self.check_platform_collsion()
+
+        self.edge_collision()
 
     
     def draw_player(self, screen):
         pygame.draw.rect(screen, RED, [self.x, self.y, self.width, self.height])
 
 class Platform():
-    def __init__(self, x, y, width, height, scroll_speed):
+    def __init__(self, x, y, width, height):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
-        self.scroll_speed = scroll_speed
 
-    def platform_update(self):
-        self.x = self.x + self.scroll_speed
+    def update_platforms(self, player):
+        self.x = self.x + player.change_x 
+
+
 
     def draw_platform(self, screen):
         pygame.draw.rect(screen, GREY, [self.x, self.y, self.width, self.height])
 
 def make_platforms():
-    platform_x = 200
-    platform_width = 150
-    platform_list.append(Platform(-600, GROUND_HEIGHT, GROUND_WIDTH, 200, 0))
-    for i in range(5):
-        platform_list.append(Platform(platform_x, GROUND_HEIGHT - 100, platform_width, 20, 0))
-        platform_list.append(Platform(platform_x + 225, GROUND_HEIGHT - 200, platform_width, 20, 0))
-        platform_x = platform_width + platform_x + 300
-
-class View():
-    def __init__(self, x, y, change_x):
-        self.x = x
-        self.y = y
-        self.change_x = change_x
-
-    def update(self):
-        self.x = self.x + self.change_x
+    platform_list.append(Platform(0, WORLD_HEIGHT, WORLD_WIDTH, 200))
+    platform_list.append(Platform(150, WORLD_HEIGHT - 100, 150, 20))
+    platform_list.append(Platform(400, WORLD_HEIGHT - 200, 150, 20))
+    platform_list.append(Platform(650, WORLD_HEIGHT - 300, 150, 20))
+    platform_list.append(Platform(900, WORLD_HEIGHT - 200, 150, 20))
+    platform_list.append(Platform(1150, WORLD_HEIGHT - 100, 150, 20))
+    platform_list.append(Platform(1400, WORLD_HEIGHT - 200, 150, 20))
 
 
 def main():
@@ -109,9 +113,7 @@ def main():
     # Variables
     frame_count = 0
     
-    player_height = 20
-    
-    player = Player(SCREEN_WIDTH / 2, GROUND_HEIGHT - player_height, 20, player_height, 0, 0, 1)
+    player = Player(100, WORLD_HEIGHT + 20, 20, 20, 0, 0, 1)
 
     make_platforms()
     # create loop
@@ -136,10 +138,8 @@ def main():
 
         player.update()
 
-        
-        
         for i in range(len(platform_list)):
-            platform_list[i].platform_update()
+            platform_list[i].update_platforms(player)
         
         # Drawing
         screen.fill(WHITE)
