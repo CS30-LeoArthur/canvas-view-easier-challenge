@@ -84,8 +84,6 @@ class Player():
         self.view = self.x - 400
 
         self.view_edge_collision()
-
-        print(self.view)
     
     def draw_player(self, screen):
         pygame.draw.rect(screen, RED, [self.x - self.view, self.y, self.width, self.height])
